@@ -9,45 +9,47 @@ import { showBtn, hiddenBtn } from './load-more';
 let page = 1;
 let searchQuery = null;
 
-formElem.addEventListener('submit', event => {
+formElem.addEventListener('submit', async event => {
   event.preventDefault();
   listElem.innerHTML = '';
   showLoader();
+  hiddenBtn();
   page = 1;
-
   searchQuery = event.currentTarget.elements['user-search-query'].value.trim();
-  getPhotos(searchQuery, page)
-    .then(res => {
-      if (res.total > 0) {
-        iziToast.success({
-          position: 'topRight',
-          message: `We find ${res.total} photos`
-        })
-      }
-      if (res.results.length === 0) {
-        iziToast.error({
-          position: 'topRight',
-          message: 'Sorry, there are not images',
-        });
-      }
-      listElem.innerHTML = createGalleryCards(res.results);
-      if (res.total > 12) {
-        showBtn();
-      }
-    })
-    .catch(err => console.log(err))
-    .finally(() => {
-      event.target.reset();
-      hiddenLoader();
-    });
+  try {
+    const res = await getPhotos(searchQuery, page);
+    if (res.data.total > 0) {
+      iziToast.success({
+        position: 'topRight',
+        message: `We find ${res.data.total} photos`,
+      });
+    }
+    if (res.data.results.length === 0) {
+      iziToast.error({
+        position: 'topRight',
+        message: 'Sorry, there are not images',
+      });
+    }
+    listElem.innerHTML = createGalleryCards(res.data.results);
+    if (res.data.total > 12) {
+      showBtn();
+    }
+  } catch (err) {
+    console.log(err);
+  } finally {
+    event.target.reset();
+    hiddenLoader();
+  }
+
 });
 
-loadMoreBtn.addEventListener('click', () => {
+loadMoreBtn.addEventListener('click', async () => {
   page++;
-  getPhotos(searchQuery, page)
-    .then(res => {
-    listElem.insertAdjacentHTML('beforeend', createGalleryCards(res.results));
-    const lastPage = Math.ceil(res.total / 12);
+  showLoader();
+  try {
+    const res = await getPhotos(searchQuery, page);
+    listElem.insertAdjacentHTML('beforeend', createGalleryCards(res.data.results));
+    const lastPage = Math.ceil(res.data.total / 12);
     if (page === lastPage) {
       hiddenBtn();
       iziToast.info({
@@ -55,5 +57,9 @@ loadMoreBtn.addEventListener('click', () => {
         message: "Sorry, but you've reached the end of results",
       });
     }
-  });
+  } catch (err) {
+    console.log(err)
+  } finally {
+    hiddenLoader();
+  }
 });
