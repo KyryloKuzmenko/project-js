@@ -40,7 +40,6 @@ formElem.addEventListener('submit', async event => {
     event.target.reset();
     hiddenLoader();
   }
-
 });
 
 loadMoreBtn.addEventListener('click', async () => {
@@ -48,7 +47,20 @@ loadMoreBtn.addEventListener('click', async () => {
   showLoader();
   try {
     const res = await getPhotos(searchQuery, page);
-    listElem.insertAdjacentHTML('beforeend', createGalleryCards(res.data.results));
+    listElem.insertAdjacentHTML(
+      'beforeend',
+      createGalleryCards(res.data.results)
+    );
+    // function scroll
+    const { height: cardHeight } = document
+      .querySelector('.gallery')
+      .firstElementChild.getBoundingClientRect();
+
+    window.scrollBy({
+      top: cardHeight * 2,
+      behavior: 'smooth',
+    });
+    //
     const lastPage = Math.ceil(res.data.total / 12);
     if (page === lastPage) {
       hiddenBtn();
@@ -58,7 +70,7 @@ loadMoreBtn.addEventListener('click', async () => {
       });
     }
   } catch (err) {
-    console.log(err)
+    console.log(err);
   } finally {
     hiddenLoader();
   }
