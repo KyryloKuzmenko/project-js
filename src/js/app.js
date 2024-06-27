@@ -18,11 +18,17 @@ formElem.addEventListener('submit', event => {
   searchQuery = event.currentTarget.elements['user-search-query'].value.trim();
   getPhotos(searchQuery, page)
     .then(res => {
+      if (res.total > 0) {
+        iziToast.success({
+          position: 'topRight',
+          message: `We find ${res.total} photos`
+        })
+      }
       if (res.results.length === 0) {
         iziToast.error({
           position: 'topRight',
-          message: 'Sorry, there are not images'
-        })
+          message: 'Sorry, there are not images',
+        });
       }
       listElem.innerHTML = createGalleryCards(res.results);
       if (res.total > 12) {
@@ -33,13 +39,21 @@ formElem.addEventListener('submit', event => {
     .finally(() => {
       event.target.reset();
       hiddenLoader();
-    })
-  
+    });
 });
 
 loadMoreBtn.addEventListener('click', () => {
   page++;
-  getPhotos(searchQuery, page).then(res => {
-      listElem.insertAdjacentHTML('beforeend', createGalleryCards(res.results))
-    });
+  getPhotos(searchQuery, page)
+    .then(res => {
+    listElem.insertAdjacentHTML('beforeend', createGalleryCards(res.results));
+    const lastPage = Math.ceil(res.total / 12);
+    if (page === lastPage) {
+      hiddenBtn();
+      iziToast.info({
+        position: 'topRight',
+        message: "Sorry, but you've reached the end of results",
+      });
+    }
+  });
 });
